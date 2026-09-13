@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOM ACADEMY PRO - Plateforme de Contrats</title>
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=j07Cu0KWBEhMI3HJqWkBl6TYzGUYOyKoBI2-X-rII-7xuBuFpOxkWIygzjc2f4TGmlpXpzz1Sk-PJFvUBc-8tf5y2I2jVfUdGazlOdAGNF1GffC9RQUBlc8XHKxZb_rzHFhgDFccDktXRVg646IXRtLwNtTueRtrExjXoypoNLIIr2vGRdoehde71s08hFuO0-PecVwXc4choImfIRglCxSe6xkUqmI9qE5kj0fUjc5X0HU4_Fia4Os6nnX3Bl_UQmnn32MBmWTxT6mtR_UbWB9uHuSgr0O68k6XbhcOAdeu3si3NieF4ji19dk35Yf1" charset="UTF-8"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--primary); }
+        .auth-overlay { position: fixed; inset: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .auth-card { background: white; padding: 32px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .btn { padding: 10px 18px; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #0f172a; }
+        .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px; margin-bottom: 12px; }
+        .dashboard-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: #0f172a; color: white; padding: 20px; }
+        .main-content { flex: 1; padding: 32px; }
+        .table-card { background: white; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th, td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-signed { background: #d1fae5; color: #065f46; }
+    </style>
+</head>
+<body>
+
+    <!-- CONNEXION / INSCRIPTION -->
+    <div id="authScreen" class="auth-overlay">
+        <div class="auth-card">
+            <h2 style="text-align: center; margin-bottom: 6px;">ECOM ACADEMY PRO</h2>
+            <p style="text-align: center; font-size: 12px; color: #64748b; margin-bottom: 20px;">Générateur & Signatures de Contrats</p>
+            <form onsubmit="handleAuth(event)">
+                <label style="font-size:12px; font-weight:600;">Email</label>
+                <input type="email" id="authEmail" class="input-field" required>
+                <label style="font-size:12px; font-weight:600;">Mot de passe</label>
+                <input type="password" id="authPassword" class="input-field" required>
+                <button type="submit" id="authSubmitBtn" class="btn btn-primary" style="width: 100%;">Se connecter</button>
+            </form>
+            <p style="text-align:center; margin-top:16px; font-size:12px;">
+                <a href="#" onclick="toggleAuthMode()" id="authToggleText" style="color:var(--accent);">Pas de compte ? S'inscrire</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- TABLEAU DE BORD SAAS -->
+    <div id="appScreen" class="dashboard-container" style="display: none;">
+        <aside class="sidebar">
+            <h3 style="margin-bottom: 24px;"><i class="fa-solid fa-graduation-cap"></i> ECOM ACADEMY</h3>
+            <p id="userEmailLabel" style="font-size: 12px; color: #94a3b8; margin-bottom: 20px;"></p>
+            <button class="btn btn-secondary" style="width: 100%; text-align: left; margin-bottom: 10px;" onclick="showView('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+            <button class="btn btn-primary" style="width: 100%; text-align: left; margin-bottom: 10px;" onclick="showView('create')"><i class="fa-solid fa-plus"></i> Nouveau Contrat</button>
+            <button class="btn btn-secondary" style="width: 100%; text-align: left; margin-top: auto;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
+        </aside>
+
+        <main class="main-content">
+            <div id="viewDashboard">
+                <h2>Mes Contrats</h2>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Contrat</th>
+                                <th>Closeuse</th>
+                                <th>Email</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contractsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="viewCreate" style="display: none; max-width: 600px;">
+                <h2>Créer & Envoyer un contrat</h2>
+                <form onsubmit="createNewContract(event)" style="margin-top:20px; background:white; padding:24px; border-radius:8px; border:1px solid #cbd5e1;">
+                    <label style="font-size:12px; font-weight:600;">Prénom de la Closeuse *</label>
+                    <input type="text" id="cFirstName" class="input-field" required>
+                    
+                    <label style="font-size:12px; font-weight:600;">Nom de la Closeuse *</label>
+                    <input type="text" id="cLastName" class="input-field" required>
+                    
+                    <label style="font-size:12px; font-weight:600;">Email de la Closeuse (pour la signature) *</label>
+                    <input type="email" id="cEmail" class="input-field" required>
+                    
+                    <label style="font-size:12px; font-weight:600;">Commission par produit livré *</label>
+                    <input type="text" id="cCommission" value="2 000 FCFA" class="input-field" required>
+
+                    <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 10px;">
+                        <i class="fa-solid fa-paper-plane"></i> Générer & Envoyer par e-mail à la closeuse
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // CONFIGURATION SUPABASE (Remplacez avec vos clés Supabase)
+        const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+        const SUPABASE_KEY = "VOTRE-CLE-ANONYME-SUPABASE";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let isSignUp = false;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                initApp();
+            }
+        });
+
+        function toggleAuthMode() {
+            isSignUp = !isSignUp;
+            document.getElementById('authSubmitBtn').innerText = isSignUp ? "S'inscrire" : "Se connecter";
+            document.getElementById('authToggleText').innerText = isSignUp ? "Déjà un compte ? Se connecter" : "Pas de compte ? S'inscrire";
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+
+            const res = isSignUp 
+                ? await supabase.auth.signUp({ email, password })
+                : await supabase.auth.signInWithPassword({ email, password });
+
+            if (res.error) alert("Erreur : " + res.error.message);
+            else {
+                currentUser = res.data.user;
+                initApp();
+            }
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            location.reload();
+        }
+
+        function initApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'flex';
+            document.getElementById('userEmailLabel').innerText = currentUser.email;
+            loadContracts();
+        }
+
+        function showView(view) {
+            document.getElementById('viewDashboard').style.display = (view === 'dashboard') ? 'block' : 'none';
+            document.getElementById('viewCreate').style.display = (view === 'create') ? 'block' : 'none';
+        }
+
+        async function loadContracts() {
+            const { data, error } = await supabase.from('contracts').select('*').order('created_at', { ascending: false });
+            if (error) return alert("Erreur de chargement des contrats : " + error.message);
+
+            const tbody = document.getElementById('contractsTableBody');
+            tbody.innerHTML = '';
+            data.forEach(c => {
+                const tr = document.createElement('tr');
+                const isSigned = c.status === 'signed';
+                tr.innerHTML = `
+                    <td><strong>${c.contract_number}</strong></td>
+                    <td>${c.closeuse_first_name} ${c.closeuse_last_name}</td>
+                    <td>${c.closeuse_email}</td>
+                    <td><span class="badge ${isSigned ? 'badge-signed' : 'badge-pending'}">${isSigned ? 'Signé' : 'En attente'}</span></td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="copySignLink('${c.signing_token}')" title="Copier le lien de signature"><i class="fa-solid fa-link"></i> Lien</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function copySignLink(token) {
+            const signUrl = `${window.location.origin}/signer.html?token=${token}`;
+            navigator.clipboard.writeText(signUrl);
+            alert("Lien de signature copié dans le presse-papier !
+Vous pouvez l'envoyer directement à la closeuse :
+" + signUrl);
+        }
+
+        async function createNewContract(e) {
+            e.preventDefault();
+            const num = `CTR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+            const token = crypto.randomUUID();
+
+            const newContract = {
+                user_id: currentUser.id,
+                contract_number: num,
+                closeuse_first_name: document.getElementById('cFirstName').value,
+                closeuse_last_name: document.getElementById('cLastName').value,
+                closeuse_email: document.getElementById('cEmail').value,
+                commission_amount: document.getElementById('cCommission').value,
+                status: 'sent_pending_signature',
+                signing_token: token
+            };
+
+            const { data, error } = await supabase.from('contracts').insert([newContract]).select();
+
+            if (error) {
+                alert("Erreur de création : " + error.message);
+            } else {
+                const signUrl = `${window.location.origin}/signer.html?token=${token}`;
+                alert(`Contrat ${num} créé avec succès !
+
+Lien unique de signature généré pour la closeuse :
+${signUrl}`);
+                showView('dashboard');
+                loadContracts();
+            }
+        }
+    </script>
+</body>
+</html>

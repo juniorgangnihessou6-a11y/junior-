@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature du Contrat de Collaboration - ECOM ACADEMY PRO</title>
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=Df6qzJCJZMMlZ8TAdUoDYZJ7ZP5HEukTzn9xjoBgt_W4hsjIkmingJnWQk9bRLC3dI2wdIYeax-yC31P6oNE8HSGOuiD1sb-OhBy1GkiisRO6-2zPxfZw13bdQOTsjEYZUkPGhg4M1mWw_-5EGd1LHKPQm3FZh9Sn_t8Igw-1ysSs_EYEweknEztmpEfSJz_kirakAa6AD8PdMPHjFMGernR8EqHSFIZYuUNqm4OJKs2Lm-O3j6iY68Vt7gTZ9AL_3_FV_jda78BM60Y5QSX0a15fP3-Lo5BUPNSB9aFxtyErpcoFvJRyufxQxaMdTpq" charset="UTF-8"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #525659; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .paper-card { background: white; max-width: 700px; width: 100%; padding: 40px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .title-block { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+        .sign-area { margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 20px; }
+        canvas { border: 1px solid #cbd5e1; border-radius: 6px; background: #fafafa; cursor: crosshair; width: 100%; height: 140px; }
+        .btn { padding: 12px 20px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-success { background: #10b981; color: white; width: 100%; margin-top: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="paper-card" id="documentCard">
+        <div class="title-block">
+            <h2>DOCUMENT CONTRACTUEL</h2>
+            <h3 style="color: #2563eb;">ECOM ACADEMY PRO</h3>
+        </div>
+
+        <h4 style="text-align: center; margin-bottom: 16px;">CONTRAT DE COLLABORATION CLOSEUSE</h4>
+
+        <p><strong>Article 1 : OBJET DU CONTRAT</strong><br>
+        Le présent contrat définit les conditions dans lesquelles la Closeuse assure la mission de confirmation des commandes et de redirection vers le livreur pour les produits d'ECOM ACADEMY PRO.</p>
+
+        <br>
+        <p><strong>Article 2 : RÉMUNÉRATION PAR COMMISSION</strong><br>
+        La Closeuse percevra une rémunération de <strong id="commLabel">2 000 FCFA</strong> par produit effectivement livré et encaissé.</p>
+
+        <br>
+        <p><strong>Article 3 : CONFIDENTIALITÉ</strong><br>
+        La Closeuse s'engage à garantir la confidentialité absolue des données clients et outils fournis.</p>
+
+        <div class="sign-area" id="signArea">
+            <h4>SIGNATURE DE LA CLOSEUSE</h4>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 8px;">Dessinez votre signature ci-dessous. La mention <em>« Lu et approuvé »</em> sera ajoutée automatiquement.</p>
+            <canvas id="sigCanvas"></canvas>
+            <button class="btn btn-success" onclick="submitSignature()"><i class="fa-solid fa-check"></i> Valider et Signer le Contrat</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+        const SUPABASE_KEY = "VOTRE-CLE-ANONYME-SUPABASE";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        let contractData = null;
+
+        // Configuration du Canvas de Signature
+        const canvas = document.getElementById('sigCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 140;
+
+        canvas.addEventListener('mousedown', () => isDrawing = true);
+        canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
+        canvas.addEventListener('mousemove', draw);
+
+        canvas.addEventListener('touchstart', (e) => { isDrawing = true; e.preventDefault(); });
+        canvas.addEventListener('touchend', () => { isDrawing = false; ctx.beginPath(); });
+        canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); });
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if(!token) return alert("Lien de signature invalide.");
+
+            const { data, error } = await supabase.from('contracts').select('*').eq('signing_token', token).single();
+            if(error || !data) {
+                alert("Contrat introuvable ou déjà expiré.");
+            } else {
+                contractData = data;
+                if(data.commission_amount) document.getElementById('commLabel').innerText = data.commission_amount;
+                if(data.status === 'signed') {
+                    document.getElementById('signArea').innerHTML = "<h3 style='color:#10b981; text-align:center;'>✓ Ce contrat a déjà été signé avec succès !</h3>";
+                }
+            }
+        });
+
+        async function submitSignature() {
+            const sigData = canvas.toDataURL();
+
+            const { error } = await supabase
+                .from('contracts')
+                .update({ 
+                    status: 'signed', 
+                    closeuse_signature_url: sigData,
+                    signed_at: new Date()
+                })
+                .eq('signing_token', token);
+
+            if(error) {
+                alert("Erreur lors de la validation : " + error.message);
+            } else {
+                alert("Votre contrat a été signé avec succès ! Merci.");
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
