@@ -126,20 +126,38 @@
         }
 
         async function handleAuth(e) {
-            e.preventDefault();
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const btn = document.getElementById('authSubmitBtn');
 
-            const res = isSignUp 
-                ? await supabase.auth.signUp({ email, password })
-                : await supabase.auth.signInWithPassword({ email, password });
+    btn.innerText = "Chargement...";
+    btn.disabled = true;
 
-            if (res.error) alert("Erreur : " + res.error.message);
-            else {
-                currentUser = res.data.user;
+    try {
+        if (isSignUp) {
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) throw error;
+            
+            alert("Compte créé avec succès ! Connexion en cours...");
+            if (data.user) {
+                currentUser = data.user;
                 initApp();
             }
+        } else {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            
+            currentUser = data.user;
+            initApp();
         }
+    } catch (err) {
+        alert("Erreur : " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = isSignUp ? "S'inscrire" : "Se connecter";
+    }
+}
 
         async function logout() {
             await supabase.auth.signOut();
